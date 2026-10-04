@@ -7,6 +7,7 @@ FACES_DIR = DATA_DIR / "faces"
 PLAYERS_DIR = DATA_DIR / "players"
 BASE_FILE = DATA_DIR / "known_faces.pkl"
 SESSION_FILE = DATA_DIR / "mafia_session.json"
+GAME_FILE = DATA_DIR / "mafia_game.json"
 
 FACE_MATCH_THRESHOLD = 0.60
 UNKNOWN_MARGIN = 0.06

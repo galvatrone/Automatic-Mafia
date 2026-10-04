@@ -140,7 +140,12 @@ class CameraWorker(threading.Thread):
             self.pending_frame_ids.discard(result["frame_id"])
             if frame is None:
                 continue
-            self.active_observations = self._process_detection_result(result, frame)
+            try:
+                self.active_observations = self._process_detection_result(result, frame)
+            except Exception as error:
+                # A bad registration frame must not terminate the camera thread.
+                self._status(f"Ошибка обработки лица: {type(error).__name__}")
+                self.active_observations = self._build_held_observations()
         if got_result and not self.active_observations:
             self.active_observations = self._build_held_observations()
 
@@ -177,7 +182,10 @@ class CameraWorker(threading.Thread):
                 track_info = self.unknown_tracks[unknown_track_id]
                 if self.registration_active and track_info["stable_count"] >= REGISTER_STABLE_FRAMES:
                     face_id = self.face_store.add_face(encoding, face_img)
-                    self.session.add_player(face_id, track_info.get("portrait_img") or portrait_img)
+                    saved_portrait = track_info.get("portrait_img")
+                    if saved_portrait is None or saved_portrait.size == 0:
+                        saved_portrait = portrait_img
+                    self.session.add_player(face_id, saved_portrait)
                     used_face_ids.add(face_id)
                     status = "known"
                     del self.unknown_tracks[unknown_track_id]

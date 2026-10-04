@@ -1,6 +1,7 @@
 import json
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Dict
 
 import cv2
@@ -26,6 +27,8 @@ class SessionStore:
         for item in data.get("players", []):
             item.setdefault("game_status", "В игре")
             item.setdefault("hidden_role", "не определена")
+            item.setdefault("elimination_reason", "")
+            item.setdefault("eliminated_at", "")
             player = Player(**item)
             player.status = "Временно не виден"
             player.last_seen = 0.0
@@ -43,6 +46,13 @@ class SessionStore:
     def new_session(self):
         self.players = {}
         self.next_number = 1
+        self.save()
+
+    def reset_game_statuses(self):
+        for player in self.players.values():
+            player.game_status = "В игре"
+            player.elimination_reason = ""
+            player.eliminated_at = ""
         self.save()
 
     def add_player(self, face_id: str, face_image: np.ndarray) -> Player:
@@ -72,4 +82,18 @@ class SessionStore:
     def rename_player(self, face_id: str, name: str):
         if face_id in self.players:
             self.players[face_id].name = name.strip()
+            self.save()
+
+    def eliminate_player(self, face_id: str, reason: str):
+        if face_id in self.players:
+            self.players[face_id].game_status = "Выбыл"
+            self.players[face_id].elimination_reason = reason
+            self.players[face_id].eliminated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            self.save()
+
+    def restore_player(self, face_id: str):
+        if face_id in self.players:
+            self.players[face_id].game_status = "В игре"
+            self.players[face_id].elimination_reason = ""
+            self.players[face_id].eliminated_at = ""
             self.save()

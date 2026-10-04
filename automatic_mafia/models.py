@@ -43,4 +43,6 @@ class Player:
     status: str = "Временно не виден"
     game_status: str = "В игре"
     hidden_role: str = "не определена"
+    elimination_reason: str = ""
+    eliminated_at: str = ""
     last_seen: float = 0.0
