@@ -33,6 +33,8 @@ class MafiaApp(tk.Tk):
         self.latest_ambiguous_track_id: Optional[str] = None
         self.session_name = f"Сессия {time.strftime('%Y-%m-%d %H:%M')}"
         self.players_signature = None
+        self.table_window: Optional[tk.Toplevel] = None
+        self.table_photo_refs = []
 
         self._build_style()
         self._build_ui()
@@ -68,6 +70,8 @@ class MafiaApp(tk.Tk):
         self.camera_button.pack(side="left", padx=(0, 8))
         ttk.Button(buttons, text="Начать регистрацию", command=self._start_registration).pack(side="left", padx=8)
         ttk.Button(buttons, text="Завершить регистрацию", command=self._finish_registration).pack(side="left", padx=8)
+        self.table_button = ttk.Button(buttons, text="Открыть таблицу", command=self._open_players_table, state="disabled")
+        self.table_button.pack(side="left", padx=8)
         ttk.Button(buttons, text="Новая сессия", command=self._new_session).pack(side="left", padx=8)
 
         stages = tk.Frame(self, bg="#10131a")
@@ -160,12 +164,18 @@ class MafiaApp(tk.Tk):
         self.phase_label.configure(text="Подготовка · Состав зафиксирован")
         self.conductor_title.configure(text="Состав участников зафиксирован")
         self.instruction_label.configure(text="Новые лица больше не добавляются в партию. Можно проверить карточки, имена и видимость.")
+        self.table_button.configure(state="normal")
+        self._open_players_table()
 
     def _new_session(self):
         self.session.new_session()
         if self.worker:
             self.worker.registration_active = False
             self.worker.registration_finished = False
+        if self.table_window and self.table_window.winfo_exists():
+            self.table_window.destroy()
+        self.table_window = None
+        self.table_button.configure(state="disabled")
         self.state_label.configure(text="новая сессия, камера не регистрирует")
         self.phase_label.configure(text="Подготовка · Регистрация участников")
         self.conductor_title.configure(text="Регистрация участников")
@@ -267,6 +277,7 @@ class MafiaApp(tk.Tk):
     def _delete_player(self, face_id: str):
         self.session.remove_player(face_id)
         self._refresh_players()
+        self._refresh_players_table()
 
     def _assign_ambiguous(self, face_id: str):
         if not self.worker or not self.latest_ambiguous_track_id:
@@ -279,8 +290,97 @@ class MafiaApp(tk.Tk):
         else:
             self.state_label.configure(text="не удалось назначить: трек уже устарел")
 
+    def _open_players_table(self):
+        if self.table_window and self.table_window.winfo_exists():
+            self.table_window.lift()
+            self._refresh_players_table()
+            return
+        self.table_window = tk.Toplevel(self)
+        self.table_window.title("Состав партии")
+        self.table_window.geometry("980x680")
+        self.table_window.minsize(760, 520)
+        self.table_window.configure(bg="#10131a")
+        self.table_window.protocol("WM_DELETE_WINDOW", self._close_players_table)
+
+        header = tk.Frame(self.table_window, bg="#10131a")
+        header.pack(fill="x", padx=18, pady=(16, 10))
+        tk.Label(header, text="Состав партии", bg="#10131a", fg="#f7f9ff", font=("Arial", 22, "bold")).pack(side="left")
+        self.table_count_label = tk.Label(header, text="", bg="#10131a", fg="#9ba8bd", font=("Arial", 12))
+        self.table_count_label.pack(side="left", padx=14)
+        ttk.Button(header, text="Обновить", command=self._refresh_players_table).pack(side="right")
+
+        container = tk.Frame(self.table_window, bg="#151a24")
+        container.pack(fill="both", expand=True, padx=18, pady=(0, 18))
+        self.table_canvas = tk.Canvas(container, bg="#151a24", highlightthickness=0)
+        self.table_scroll = ttk.Scrollbar(container, orient="vertical", command=self.table_canvas.yview)
+        self.table_frame = tk.Frame(self.table_canvas, bg="#151a24")
+        self.table_frame.bind("<Configure>", lambda _e: self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all")))
+        self.table_canvas.create_window((0, 0), window=self.table_frame, anchor="nw")
+        self.table_canvas.configure(yscrollcommand=self.table_scroll.set)
+        self.table_canvas.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=10)
+        self.table_scroll.pack(side="right", fill="y", pady=10)
+        self._refresh_players_table()
+
+    def _close_players_table(self):
+        if self.table_window and self.table_window.winfo_exists():
+            self.table_window.destroy()
+        self.table_window = None
+        self.table_photo_refs = []
+
+    def _refresh_players_table(self):
+        if not self.table_window or not self.table_window.winfo_exists():
+            return
+        for child in self.table_frame.winfo_children():
+            child.destroy()
+        self.table_photo_refs = []
+        players = sorted(self.session.players.values(), key=lambda p: p.number)
+        self.table_count_label.configure(text=f"{len(players)} игроков")
+        if not players:
+            tk.Label(
+                self.table_frame,
+                text="Состав пуст",
+                bg="#151a24",
+                fg="#778399",
+                font=("Arial", 16),
+                pady=28,
+            ).pack(fill="x")
+            return
+        for player in players:
+            self._add_table_row(player)
+
+    def _add_table_row(self, player: Player):
+        row = tk.Frame(self.table_frame, bg="#1b2230", padx=12, pady=10)
+        row.pack(fill="x", padx=4, pady=6)
+        photo = self._load_table_photo(player.photo_path)
+        if photo:
+            self.table_photo_refs.append(photo)
+            tk.Label(row, image=photo, bg="#1b2230").grid(row=0, column=0, rowspan=3, padx=(0, 14))
+        tk.Label(row, text=f"#{player.number}", bg="#1b2230", fg="#ffffff", font=("Arial", 18, "bold"), width=5).grid(row=0, column=1, rowspan=3, sticky="n")
+        name_var = tk.StringVar(value=player.name)
+        name_entry = tk.Entry(row, textvariable=name_var, bg="#121722", fg="#f7f9ff", insertbackground="#f7f9ff", relief="flat", font=("Arial", 14))
+        name_entry.grid(row=0, column=2, sticky="ew", padx=(0, 12), pady=(0, 8))
+        name_entry.bind("<FocusOut>", lambda _e, fid=player.face_id, var=name_var: self._rename_from_table(fid, var.get()))
+        name_entry.bind("<Return>", lambda _e, fid=player.face_id, var=name_var: self._rename_from_table(fid, var.get()))
+        tk.Label(row, text=player.game_status, bg="#1b2230", fg="#c6d0e1", font=("Arial", 12)).grid(row=1, column=2, sticky="w")
+        tk.Label(row, text=player.status, bg="#1b2230", fg="#9fe3b1" if player.status == "В кадре" else "#d7b56d", font=("Arial", 12)).grid(row=2, column=2, sticky="w")
+        ttk.Button(row, text="Удалить", command=lambda fid=player.face_id: self._delete_player(fid)).grid(row=0, column=3, sticky="e")
+        row.columnconfigure(2, weight=1)
+
+    def _load_table_photo(self, path: str):
+        if not path or not Path(path).exists():
+            return None
+        image = Image.open(path)
+        image.thumbnail((132, 132), Image.Resampling.LANCZOS)
+        return ImageTk.PhotoImage(image)
+
+    def _rename_from_table(self, face_id: str, name: str):
+        self.session.rename_player(face_id, name)
+        self._refresh_players()
+
     def _close(self):
         if self.worker:
             self.worker.stop()
             self.worker.join(timeout=2.0)
+        if self.table_window and self.table_window.winfo_exists():
+            self.table_window.destroy()
         self.destroy()
