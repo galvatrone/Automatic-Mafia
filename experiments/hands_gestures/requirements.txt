@@ -1,0 +1,4 @@
+PySide6-Essentials>=6.8,<7
+mediapipe==0.10.35
+numpy>=1.26,<2
+psutil>=5.9,<8

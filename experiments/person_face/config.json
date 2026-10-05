@@ -1,0 +1,11 @@
+{
+  "source": "0",
+  "face_model": "OpenCV YuNet + SFace",
+  "person_detector": "YOLO + ByteTrack",
+  "tracker": "ByteTrack",
+  "yunet_model": "models/face_detection_yunet_2023mar.onnx",
+  "sface_model": "models/face_recognition_sface_2021dec.onnx",
+  "insightface_pack": "buffalo_sc",
+  "yolo_model": "models/yolo11n.pt",
+  "rtdetr_model": "models/rtdetr-l.pt"
+}

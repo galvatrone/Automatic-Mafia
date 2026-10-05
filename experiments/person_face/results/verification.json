@@ -1,0 +1,20 @@
+{
+  "adapter": "YuNet + SFace + YOLO11n + ByteTrack",
+  "weights_available": true,
+  "models_loaded": true,
+  "inference_completed": true,
+  "live_camera_tested": false,
+  "face_count": 1,
+  "embedding_size": 128,
+  "stable_tag": "P001",
+  "person_count": 4,
+  "video_frames": 90,
+  "face_timing": {
+    "median_ms": 105.17831399920397,
+    "p95_ms": 126.7529899996589
+  },
+  "person_timing": {
+    "median_ms": 34.92654699948616,
+    "p95_ms": 55.22828399989521
+  }
+}

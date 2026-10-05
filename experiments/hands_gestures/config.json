@@ -1,0 +1,10 @@
+{
+  "source": "0",
+  "min_detection_confidence": 0.6,
+  "min_tracking_confidence": 0.6,
+  "hold_ms": 250,
+  "smoothing": 0.6,
+  "owner_max_distance": 0.18,
+  "owner_ambiguity_margin": 0.015,
+  "owner_cross_body_ambiguity": 0.06
+}

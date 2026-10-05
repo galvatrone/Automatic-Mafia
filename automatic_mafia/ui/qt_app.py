@@ -6,7 +6,7 @@ from typing import Optional
 
 import cv2
 from PySide6.QtCore import QObject, QTimer, Qt, Signal, QPointF, QRectF, QSize
-from PySide6.QtGui import QFont, QImage, QKeySequence, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QPalette, QColor
+from PySide6.QtGui import QBrush, QFont, QImage, QKeySequence, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QPalette, QColor
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -138,7 +139,11 @@ class PlayerCard(QFrame):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         rect = self.rect().adjusted(1, 1, -1, -1)
-        radius = 12
+        radius = 16
+        shadow_rect = rect.translated(0, 4)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(0, 0, 0, 85))
+        painter.drawRoundedRect(shadow_rect, radius, radius)
         clip = QPainterPath()
         clip.addRoundedRect(rect, radius, radius)
         painter.setClipPath(clip)
@@ -154,9 +159,13 @@ class PlayerCard(QFrame):
             painter.drawPixmap(rect, scaled, source.toRect())
         else:
             painter.fillRect(rect, self.fill_color)
-            painter.setPen(QPen(QColor(MUTED), 2))
-            painter.setFont(QFont("DejaVu Sans", 30, QFont.Weight.Bold))
-            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, f"#{self.player_number}")
+            silhouette = QPainterPath()
+            center_x = rect.center().x()
+            head_y = rect.top() + rect.height() * 0.38
+            silhouette.addEllipse(QRectF(center_x - 25, head_y - 25, 50, 50))
+            silhouette.moveTo(center_x - 60, rect.top() + rect.height() * 0.72)
+            silhouette.cubicTo(center_x - 55, rect.top() + rect.height() * 0.53, center_x + 55, rect.top() + rect.height() * 0.53, center_x + 60, rect.top() + rect.height() * 0.72)
+            painter.fillPath(silhouette, QColor(MUTED))
 
         if self.eliminated:
             painter.fillRect(rect, QColor(0, 0, 0, 155))
@@ -184,11 +193,15 @@ class PlayerCard(QFrame):
 
         footer_height = max(48, int(rect.height() * 0.25))
         footer = QRectF(rect.left(), rect.bottom() - footer_height, rect.width(), footer_height)
-        painter.setBrush(QColor(10, 10, 12, 205))
+        footer_gradient = QLinearGradient(0, footer.top() - footer_height * 0.7, 0, footer.bottom())
+        footer_gradient.setColorAt(0.0, QColor(8, 8, 10, 0))
+        footer_gradient.setColorAt(0.42, QColor(8, 8, 10, 170))
+        footer_gradient.setColorAt(1.0, QColor(8, 8, 10, 235))
+        painter.setBrush(footer_gradient)
         painter.drawRect(footer)
         painter.setPen(QColor(TEXT))
         painter.setFont(QFont("DejaVu Sans", 13, QFont.Weight.Bold))
-        name_rect = footer.adjusted(10, 5, -10, -footer_height / 2)
+        name_rect = footer.adjusted(10, 7, -10, -footer_height / 2)
         painter.drawText(name_rect, Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, self.player_name)
         if self.public_label:
             painter.setPen(QColor(GOLD if not self.eliminated else RED))
@@ -259,10 +272,25 @@ class BoardWindow(QMainWindow):
         self.public_message.setObjectName("publicMessage")
         self.public_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.root_layout.addWidget(self.public_message)
-        self.timer_display = QLabel()
+        self.speech_panel = QWidget()
+        self.speech_panel.setObjectName("speechPanel")
+        speech_layout = QHBoxLayout(self.speech_panel)
+        speech_layout.setContentsMargins(14, 6, 14, 6)
+        speech_layout.setSpacing(14)
+        self.timer_display = QLabel("00:30")
         self.timer_display.setObjectName("boardTimer")
         self.timer_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.root_layout.addWidget(self.timer_display)
+        speech_layout.addWidget(self.timer_display, 0)
+        self.speaker_display = QLabel()
+        self.speaker_display.setObjectName("speakerDisplay")
+        speech_layout.addWidget(self.speaker_display, 1)
+        self.speech_progress = QProgressBar()
+        self.speech_progress.setObjectName("speechProgress")
+        self.speech_progress.setRange(0, 30)
+        self.speech_progress.setTextVisible(False)
+        speech_layout.addWidget(self.speech_progress, 2)
+        self.root_layout.addWidget(self.speech_panel)
+        self.speech_panel.hide()
 
     def refresh(self):
         state = self.controller.game.state
@@ -274,8 +302,8 @@ class BoardWindow(QMainWindow):
             self.scroll.hide()
             self.public_message.setText("Роли раскрываются только ведущим")
             self.public_message.show()
+            self.speech_panel.hide()
             self.timer_display.clear()
-            self.timer_display.hide()
             if not self.isFullScreen():
                 self.showFullScreen()
                 self.victory_fullscreen = True
@@ -290,6 +318,7 @@ class BoardWindow(QMainWindow):
             self.instruction.setText("ГОРОД СПИТ")
             self.public_message.setText("Ожидание следующей роли")
             self.public_message.show()
+            self.speech_panel.hide()
             return
         self.scroll.show()
         self.instruction.setText(self.controller.public_instruction())
@@ -299,15 +328,19 @@ class BoardWindow(QMainWindow):
         timer = self.controller.public_view().get("timer", {})
         if state.phase == PHASE_DAY and timer.get("speaker_name"):
             remaining = int(timer.get("remaining", 30))
-            self.timer_display.setText(f"{remaining // 60:02d}:{remaining % 60:02d}  ·  {timer['speaker_name']}")
-            self.timer_display.show()
+            self.timer_display.setText(f"{remaining // 60:02d}:{remaining % 60:02d}")
+            self.speaker_display.setText(timer["speaker_name"])
+            self.speech_progress.setValue(remaining)
+            self.speech_panel.show()
         else:
-            self.timer_display.clear()
-            self.timer_display.hide()
+            self.speech_panel.hide()
         while self.cards_layout.count():
             item = self.cards_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget()
+            if widget:
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
         players = sorted(self.controller.session.players.values(), key=lambda player: player.number)
         columns = self._columns(len(players))
         rows = max(1, (len(players) + columns - 1) // columns)
@@ -573,8 +606,11 @@ class ControlWindow(QMainWindow):
     def refresh_cards(self):
         while self.cards_layout.count():
             item = self.cards_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget()
+            if widget:
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
         players = sorted(self.session.players.values(), key=lambda player: player.number)
         columns = 4 if len(players) > 12 else 3
         spacing = 12
@@ -985,7 +1021,7 @@ class MafiaQtApp(QObject):
             PHASE_COMMISSAR: "Выберите игрока для проверки",
             PHASE_COMMISSAR_RESULT: "Результат проверки доступен комиссару",
             PHASE_DOCTOR: "Выберите игрока для лечения",
-            PHASE_DAY: self.game.state.day_message or "Открытое обсуждение",
+            PHASE_DAY: "Открытое обсуждение",
         }.get(self.game.state.phase, "Подготовка партии")
 
     @staticmethod
@@ -1246,6 +1282,10 @@ def run():
         QLabel#roleCount {{ color: {MUTED}; }}
         QLabel#panelTitle {{ color: {GOLD}; font-weight: 700; margin-top: 8px; }}
         QLabel#timerLabel, QLabel#boardTimer {{ color: {GOLD}; font-size: 25px; font-weight: 700; padding: 5px; }}
+        QLabel#speakerDisplay {{ color: {TEXT}; font-size: 16px; font-weight: 700; }}
+        QWidget#speechPanel {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 10px; }}
+        QProgressBar#speechProgress {{ background: {BG}; border: 1px solid {BORDER}; border-radius: 4px; height: 8px; }}
+        QProgressBar#speechProgress::chunk {{ background: {GOLD}; border-radius: 3px; }}
         QLabel#headerPhase, QLabel#liveCount, QLabel#boardState {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 8px; padding: 8px 10px; color: {GOLD}; }}
         QFrame#sidePanel {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 10px; padding: 8px; }}
         QLabel#numberBadge {{ background: {GOLD}; color: {BG}; border-radius: 5px; padding: 4px 6px; font-weight: 700; }}
@@ -1256,7 +1296,8 @@ def run():
         QPushButton:hover {{ background: #8a3948; }}
         QPushButton:pressed {{ background: #59212c; }}
         QPushButton:disabled {{ background: #2a292d; color: #77747a; border-color: #333238; }}
-        QListWidget, QScrollArea, QLineEdit, QComboBox, QWidget#cardsHost {{ background: {BG}; border: 1px solid {BORDER}; border-radius: 7px; color: {TEXT}; padding: 5px; }}
+        QListWidget, QScrollArea, QLineEdit, QComboBox {{ background: {BG}; border: 1px solid {BORDER}; border-radius: 7px; color: {TEXT}; padding: 5px; }}
+        QWidget#cardsHost {{ background: transparent; border: 0; padding: 0; }}
         QScrollArea QWidget {{ background: {BG}; }}
         QScrollArea QWidget#cardsHost {{ border: 0; border-radius: 0; }}
         QScrollArea::viewport {{ background: {BG}; border: 0; }}

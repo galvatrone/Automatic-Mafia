@@ -1,0 +1,14 @@
+{
+  "exchange_loaded": true,
+  "participant_count": 5,
+  "cycle_valid": true,
+  "numbers_confirmed": true,
+  "numbers": {
+    "track-1": 1,
+    "track-2": 2,
+    "track-3": 3,
+    "track-4": 4,
+    "P001": 5
+  },
+  "message": "Единый цикл корректен"
+}

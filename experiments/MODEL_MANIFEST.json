@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-10-05T13:28:58.218483+00:00",
+  "files": [
+    {
+      "name": "YuNet 2023mar",
+      "url": "https://github.com/opencv/opencv_zoo/raw/refs/heads/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx",
+      "path": "person_face/models/face_detection_yunet_2023mar.onnx",
+      "bytes": 232589,
+      "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4"
+    },
+    {
+      "name": "SFace 2021dec",
+      "url": "https://github.com/opencv/opencv_zoo/raw/refs/heads/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx",
+      "path": "person_face/models/face_recognition_sface_2021dec.onnx",
+      "bytes": 38696353,
+      "sha256": "0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79"
+    },
+    {
+      "name": "YOLO11n",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.pt",
+      "path": "person_face/models/yolo11n.pt",
+      "bytes": 5613764,
+      "sha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1"
+    },
+    {
+      "name": "MediaPipe Hand Landmarker float16 v1",
+      "url": "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+      "path": "hands_gestures/models/hand_landmarker.task",
+      "bytes": 7819105,
+      "sha256": "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1"
+    },
+    {
+      "name": "MediaPipe Pose Landmarker Lite float16 v1",
+      "url": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+      "path": "hands_gestures/models/pose_landmarker_lite.task",
+      "bytes": 5777746,
+      "sha256": "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a"
+    },
+    {
+      "name": "MediaPipe official hand sample",
+      "url": "https://storage.googleapis.com/mediapipe-tasks/hand_landmarker/woman_hands.jpg",
+      "path": "shared/test_assets/woman_hands.jpg",
+      "bytes": 67719,
+      "sha256": "70cbeb38e198c9862202e0979c21a99b40ca980d3e7b250176c85b1636a40f12"
+    },
+    {
+      "name": "OpenCV official Lena sample",
+      "url": "https://raw.githubusercontent.com/opencv/opencv/master/samples/data/lena.jpg",
+      "path": "shared/test_assets/lena.jpg",
+      "bytes": 91814,
+      "sha256": "7de7ed51a1594fff247f4cae2301eceacf5313d6011e37b4a4c8733f7bb72c07"
+    },
+    {
+      "name": "Ultralytics official bus sample",
+      "url": "https://github.com/ultralytics/assets/raw/refs/heads/main/im/bus.jpg",
+      "path": "shared/test_assets/bus.jpg",
+      "bytes": 137419,
+      "sha256": "c02019c4979c191eb739ddd944445ef408dad5679acab6fd520ef9d434bfbc63"
+    },
+    {
+      "name": "Wikimedia closed fist test, CC BY-SA 4.0",
+      "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Closed_fist.jpg",
+      "path": "shared/test_assets/closed_fist.jpg",
+      "bytes": 1958469,
+      "sha256": "0e9b6332547e6fd3ba39be1dd5d10d3710eaf44d8217a5bedde8bcb803475fc9"
+    },
+    {
+      "name": "Wikimedia pointing person test, public domain",
+      "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Man_pointing_with_his_finger.jpg",
+      "path": "shared/test_assets/pointing_person.jpg",
+      "bytes": 536264,
+      "sha256": "0e98fd555b4e33c8ec97e10421d54f2490a6da179d058701de41e14ff7205926"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+**/.venv/
+**/__pycache__/
+*.pyc
+
+person_face/models/
+hands_gestures/models/
+shared/test_assets/
+
+person_face/results/participants/
+person_face/results/participants.json
+person_face/results/identity_gallery.json
+person_face/results/verification/
+virtual_table/results/table_schema.json

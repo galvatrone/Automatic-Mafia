@@ -1,0 +1,67 @@
+{
+  "adapter": "MediaPipe Hand Landmarker + Pose Landmarker Lite",
+  "weights_available": true,
+  "models_loaded": true,
+  "inference_completed": true,
+  "live_camera_tested": false,
+  "cases": {
+    "open_palm": {
+      "hands": 2,
+      "landmarks": [
+        21,
+        21
+      ],
+      "gestures": [
+        "открытая ладонь",
+        "открытая ладонь"
+      ],
+      "finger_counts": [
+        5,
+        5
+      ],
+      "owners": [
+        "body-1",
+        "body-1"
+      ],
+      "poses": 1
+    },
+    "fist": {
+      "hands": 1,
+      "landmarks": [
+        21
+      ],
+      "gestures": [
+        "кулак"
+      ],
+      "finger_counts": [
+        0
+      ],
+      "owners": [
+        null
+      ],
+      "poses": 1
+    },
+    "pointing": {
+      "hands": 1,
+      "landmarks": [
+        21
+      ],
+      "gestures": [
+        "указательный жест"
+      ],
+      "finger_counts": [
+        2
+      ],
+      "owners": [
+        null
+      ],
+      "poses": 2
+    }
+  },
+  "ambiguous_owner_policy": "owner remains null unless wrist distance and margin pass",
+  "video_frames": 90,
+  "timing": {
+    "median_ms": 55.61051099903125,
+    "p95_ms": 94.57685199959087
+  }
+}

@@ -37,6 +37,7 @@ flowchart TD
 - `automatic_mafia/storage/game_store.py`: only source of truth for roles, phases and night rules.
 - `automatic_mafia/storage/session_store.py`: participant photos, stable numbers and elimination reasons.
 - `automatic_mafia/storage/face_store.py`: persistent face database and encodings.
+- `experiments/`: isolated camera/gesture/table evaluation stands; these do not import or write the main game state.
 
 ## Architecture Notes
 
@@ -44,6 +45,7 @@ flowchart TD
 - Closing the board hides it without stopping the party. Closing the host stops camera resources and exits.
 - Face visibility is not game status. Camera updates must never eliminate or restore players.
 - Existing Tk UI remains in `automatic_mafia/ui/app.py` as legacy code, but `app.py` no longer starts it.
+- Experiments exchange only `experiments/person_face/results/participants.json` using schema `automatic-mafia.experiments.participants/v1`; the main session store is not part of this flow.
 
 ## Current Risks
 
